@@ -1,6 +1,6 @@
 import { insertUi } from './insert-ui.js';
 import { updateUI } from './update-state.js';
-import log from './log.js';
+import log from './log.ts';
 import getFromStorage from '../../utils/getFromStorage.js';
 import { addAlbums } from './album-selects-update.js';
 import { actionsListenersSetUp } from './action-bar.js';

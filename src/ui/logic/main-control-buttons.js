@@ -1,4 +1,4 @@
-import log from '../logic/log.js';
+import log from '../logic/log.ts';
 import { core } from '../../globals.js';
 
 export default function controlButttonsListeners() {

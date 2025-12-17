@@ -1,7 +1,7 @@
 import Api from './api/api.js';
 import ApiUtils from './api/api-utils.js';
 import { timeToHHMMSS, isPatternValid } from './utils/helpers.js';
-import log from './ui/logic/log.js';
+import log from './ui/logic/log.ts';
 import * as filters from './filters.js';
 import { apiSettingsDefault } from './api/api-utils-default-presets.js';
 

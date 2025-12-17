@@ -1,6 +1,6 @@
 import saveToStorage from '../../utils/saveToStorage.js';
 import getFromStorage from '../../utils/getFromStorage.js';
-import log from './log.js';
+import log from './log.ts';
 import { apiSettingsDefault } from '../../api/api-utils-default-presets.js';
 import getFormData from './utils/getFormData.js';
 

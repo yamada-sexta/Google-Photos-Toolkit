@@ -1,5 +1,5 @@
 import Api from './api.js';
-import log from '../ui/logic/log.js';
+import log from '../ui/logic/log.ts';
 import splitArrayIntoChunks from '../utils/splitArrayIntoChunks.js';
 import { apiSettingsDefault } from './api-utils-default-presets.js';
 
