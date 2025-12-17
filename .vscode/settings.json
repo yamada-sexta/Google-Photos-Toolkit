@@ -6,5 +6,8 @@
   },
   "eslint.validate": ["javascript"],
   "prettier.printWidth": 150,
-  "prettier.singleQuote": true
+  "prettier.singleQuote": true,
+  "cSpell.words": [
+    "GPTK"
+  ]
 }
