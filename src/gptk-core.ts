@@ -5,13 +5,31 @@ import log from './ui/logic/log';
 import * as filters from './filters';
 import { apiSettingsDefault } from './api/api-utils-default-presets';
 
+type Source = 'library' | 'search' | 'trash' | 'lockedFolder' | 'favorites' | 'sharedLinks' | 'albums';
+
+type MediaItem = any;
+type Filter = any;
+type Action = any;
+type ApiSettings = any;
+
+interface ExecuteActionParams {
+  mediaItems: MediaItem[];
+  source: Source | string;
+  targetAlbum?: any;
+  newTargetAlbumName?: string;
+  preserveOrder?: boolean;
+}
+
 export default class Core {
+  isProcessRunning: boolean;
+  api: Api;
+  apiUtils!: ApiUtils;
   constructor() {
     this.isProcessRunning = false;
     this.api = new Api();
   }
 
-  async getAndFilterMedia(filter, source) {
+  async getAndFilterMedia(filter: Filter, source: Source): Promise<MediaItem[]> {
     const mediaItems = await this.fetchMediaItems(source, filter);
     log(`Found items: ${mediaItems.length}`);
     if (!this.isProcessRunning || !mediaItems?.length) return mediaItems;
@@ -20,8 +38,8 @@ export default class Core {
     return filteredItems;
   }
 
-  async fetchMediaItems(source, filter) {
-    const sourceHandlers = {
+  async fetchMediaItems(source: Source, filter: Filter): Promise<MediaItem[]> {
+    const sourceHandlers: Record<Source, () => Promise<any>> = {
       library: async () => {
         log('Reading library');
         return filter.dateType === 'uploaded' ? await this.getLibraryItemsByUploadDate(filter) : await this.getLibraryItemsByTakenDate(filter);
@@ -51,7 +69,7 @@ export default class Core {
         }
         log(`Shared Links Found: ${sharedLinks.length}`);
         const sharedLinkItems = await Promise.all(
-          sharedLinks.map(async (sharedLink) => {
+          sharedLinks.map(async (sharedLink: any) => {
             log('Getting shared link items');
             return await this.apiUtils.getAllMediaInSharedLink(sharedLink.linkId);
           })
@@ -65,7 +83,7 @@ export default class Core {
         }
         const albumMediaKeys = Array.isArray(filter.albumsInclude) ? filter.albumsInclude : [filter.albumsInclude];
         const albumItems = await Promise.all(
-          albumMediaKeys.map(async (albumMediaKey) => {
+          albumMediaKeys.map(async (albumMediaKey: any) => {
             log('Getting album items');
             return await this.apiUtils.getAllMediaInAlbum(albumMediaKey);
           })
@@ -85,10 +103,10 @@ export default class Core {
     return mediaItems;
   }
 
-  async applyFilters(mediaItems, filter, source) {
+  async applyFilters(mediaItems: MediaItem[], filter: Filter, source: Source | string): Promise<MediaItem[]> {
     let filteredItems = mediaItems;
 
-    const filtersToApply = [
+    const filtersToApply: { condition: unknown; method: () => Promise<MediaItem[]> | MediaItem[] }[] = [
       {
         condition: source !== 'library' && (filter.lowerBoundaryDate || filter.higherBoundaryDate),
         method: () => filters.filterByDate(filteredItems, filter),
@@ -125,7 +143,7 @@ export default class Core {
     // filtering with basic filters
     let i = 0;
     do {
-      const { condition, method } = filtersToApply[i];
+      const { condition, method } = filtersToApply[i]!;
       if (condition && filteredItems.length) {
         filteredItems = await method();
       }
@@ -139,7 +157,7 @@ export default class Core {
     ) {
       filteredItems = await this.extendMediaItemsWithMediaInfo(filteredItems);
 
-      const extendedFilters = [
+      const extendedFilters: { condition: unknown; method: () => Promise<MediaItem[]> | MediaItem[] }[] = [
         { condition: filter.fileNameRegex, method: () => filters.fileNameFilter(filteredItems, filter) },
         { condition: filter.descriptionRegex, method: () => filters.descriptionFilter(filteredItems, filter) },
         { condition: filter.space, method: () => filters.spaceFilter(filteredItems, filter) },
@@ -152,7 +170,7 @@ export default class Core {
 
       i = 0;
       do {
-        const { condition, method } = extendedFilters[i];
+        const { condition, method } = extendedFilters[i]!;
         if (condition && filteredItems.length) {
           filteredItems = await method();
         }
@@ -162,60 +180,68 @@ export default class Core {
 
     if (filter.sortBySize && filteredItems.length) {
       filteredItems = await this.extendMediaItemsWithMediaInfo(filteredItems);
-      filteredItems.sort((a, b) => (b.size || 0) - (a.size || 0));
+      filteredItems.sort((a: MediaItem, b: MediaItem) => (b.size || 0) - (a.size || 0));
     }
 
     // filtering by similarity
     if (filteredItems.length > 0 && filter.similarityThreshold) {
-      filteredItems = filters.filterSimilar(this, filteredItems, filter);
+      filteredItems = await filters.filterSimilar(this, filteredItems, filter);
     }
 
     return filteredItems;
   }
 
-  async excludeAlbumItems(mediaItems, filter) {
-    const itemsToExclude = [];
+  async excludeAlbumItems(mediaItems: MediaItem[], filter: Filter): Promise<MediaItem[]> {
+    const itemsToExclude: MediaItem[] = [];
     const albumMediaKeys = Array.isArray(filter.albumsExclude) ? filter.albumsExclude : [filter.albumsExclude];
 
     await Promise.all(
-      albumMediaKeys.map(async (albumMediaKey) => {
+      albumMediaKeys.map(async (albumMediaKey: string) => {
         log('Getting album items to exclude');
-        const excludedItems = await this.apiUtils.getAllMediaInAlbum(albumMediaKey);
-        itemsToExclude.push(...excludedItems);
+        const excludedItems: MediaItem[] | undefined = await this.apiUtils.getAllMediaInAlbum(albumMediaKey);
+        itemsToExclude.push(...(excludedItems || []));
       })
     );
 
     log('Excluding album items');
-    return mediaItems.filter((mediaItem) => !itemsToExclude.some((excludeItem) => excludeItem.dedupKey === mediaItem.dedupKey));
+    return mediaItems.filter(
+      (mediaItem: MediaItem) => !itemsToExclude.some((excludeItem: MediaItem) => excludeItem.dedupKey === mediaItem.dedupKey)
+    );
   }
 
-  async excludeSharedItems(mediaItems) {
+  async excludeSharedItems(mediaItems: MediaItem[]): Promise<MediaItem[]> {
     log('Getting shared links items to exclude');
-    const itemsToExclude = [];
-    const sharedLinks = await this.apiUtils.getAllSharedLinks();
+    const itemsToExclude: MediaItem[] = [];
+    const sharedLinks: any[] | undefined = await this.apiUtils.getAllSharedLinks();
+    if (!sharedLinks || sharedLinks.length === 0) {
+      log('No shared links found to exclude');
+      return mediaItems;
+    }
 
     await Promise.all(
-      sharedLinks.map(async (sharedLink) => {
-        const sharedLinkItems = await this.apiUtils.getAllMediaInSharedLink(sharedLink.linkId);
-        itemsToExclude.push(...sharedLinkItems);
+      sharedLinks.map(async (sharedLink: any) => {
+        const sharedLinkItems: MediaItem[] | undefined = await this.apiUtils.getAllMediaInSharedLink(sharedLink.linkId);
+        itemsToExclude.push(...(sharedLinkItems || []));
       })
     );
 
     log('Excluding shared items');
-    return mediaItems.filter((mediaItem) => !itemsToExclude.some((excludeItem) => excludeItem.dedupKey === mediaItem.dedupKey));
+    return mediaItems.filter(
+      (mediaItem: MediaItem) => !itemsToExclude.some((excludeItem: MediaItem) => excludeItem.dedupKey === mediaItem.dedupKey)
+    );
   }
 
-  async extendMediaItemsWithMediaInfo(mediaItems) {
-    const mediaInfoData = await this.apiUtils.getBatchMediaInfoChunked(mediaItems);
+  async extendMediaItemsWithMediaInfo(mediaItems: MediaItem[]): Promise<MediaItem[]> {
+    const mediaInfoData: any[] = (await this.apiUtils.getBatchMediaInfoChunked(mediaItems)) || [];
 
-    const extendedMediaItems = mediaItems.map((item) => {
-      const matchingInfoItem = mediaInfoData.find((infoItem) => infoItem.mediaKey === item.mediaKey);
+    const extendedMediaItems = mediaItems.map((item: MediaItem) => {
+      const matchingInfoItem = mediaInfoData.find((infoItem: any) => infoItem.mediaKey === item.mediaKey);
       return { ...item, ...matchingInfoItem };
     });
     return extendedMediaItems;
   }
 
-  async getLibraryItemsByTakenDate(filter) {
+  async getLibraryItemsByTakenDate(filter: Filter): Promise<MediaItem[] | void> {
     let source;
     if (filter.archived === 'true') {
       source = 'archive';
@@ -229,20 +255,21 @@ export default class Core {
     lowerBoundaryDate = isNaN(lowerBoundaryDate) ? -Infinity : lowerBoundaryDate;
     higherBoundaryDate = isNaN(higherBoundaryDate) ? Infinity : higherBoundaryDate;
 
-    const mediaItems = [];
+    const mediaItems: MediaItem[] = [];
 
     let nextPageId = null;
+    const api: Api = this.api;
 
     if (Number.isInteger(lowerBoundaryDate || Number.isInteger(higherBoundaryDate)) && filter.intervalType === 'include') {
       let nextPageTimestamp = higherBoundaryDate !== Infinity ? higherBoundaryDate : null;
       do {
         if (!this.isProcessRunning) return;
-        let mediaPage = await this.api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
+        const mediaPage: any = await api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
         nextPageId = mediaPage?.nextPageId;
         if (!mediaPage) break;
         nextPageTimestamp = mediaPage.lastItemTimestamp - 1;
         if (!mediaPage.items || mediaPage?.items?.length === 0) continue;
-        mediaPage.items = mediaPage.items.filter((item) => item.timestamp >= lowerBoundaryDate && item.timestamp <= higherBoundaryDate);
+        mediaPage.items = mediaPage.items.filter((item: MediaItem) => item.timestamp >= lowerBoundaryDate && item.timestamp <= higherBoundaryDate);
         if (!mediaPage.items || mediaPage?.items?.length === 0) continue;
         log(`Found ${mediaPage?.items?.length} items`);
         mediaItems.push(...mediaPage.items);
@@ -251,12 +278,12 @@ export default class Core {
       let nextPageTimestamp = null;
       do {
         if (!this.isProcessRunning) return;
-        let mediaPage = await this.api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
+        const mediaPage: any = await api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
         nextPageId = mediaPage?.nextPageId;
         if (!mediaPage) break;
         nextPageTimestamp = mediaPage.lastItemTimestamp - 1;
         if (!mediaPage.items || mediaPage?.items?.length === 0) continue;
-        mediaPage.items = mediaPage.items.filter((item) => item.timestamp < lowerBoundaryDate || item.timestamp > higherBoundaryDate);
+        mediaPage.items = mediaPage.items.filter((item: any) => item.timestamp < lowerBoundaryDate || item.timestamp > higherBoundaryDate);
 
         if (nextPageTimestamp > lowerBoundaryDate && nextPageTimestamp < higherBoundaryDate) {
           nextPageTimestamp = lowerBoundaryDate;
@@ -273,7 +300,7 @@ export default class Core {
       let nextPageTimestamp = null;
       do {
         if (!this.isProcessRunning) return;
-        let mediaPage = await this.api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
+        const mediaPage: any = await api.getItemsByTakenDate(nextPageTimestamp, source, nextPageId);
         nextPageId = mediaPage?.nextPageId;
         if (!mediaPage) break;
         nextPageTimestamp = mediaPage.lastItemTimestamp - 1;
@@ -286,14 +313,14 @@ export default class Core {
     return mediaItems;
   }
 
-  async getLibraryItemsByUploadDate(filter) {
+  async getLibraryItemsByUploadDate(filter: Filter): Promise<MediaItem[] | void> {
     let lowerBoundaryDate = new Date(filter.lowerBoundaryDate).getTime();
     let higherBoundaryDate = new Date(filter.higherBoundaryDate).getTime();
 
     lowerBoundaryDate = isNaN(lowerBoundaryDate) ? -Infinity : lowerBoundaryDate;
     higherBoundaryDate = isNaN(higherBoundaryDate) ? Infinity : higherBoundaryDate;
 
-    const mediaItems = [];
+    const mediaItems: MediaItem[] = [];
 
     let nextPageId = null;
 
@@ -301,18 +328,20 @@ export default class Core {
 
     do {
       if (!this.isProcessRunning) return;
-      let mediaPage = await this.api.getItemsByUploadedDate(nextPageId);
+      const mediaPage: any = await this.api.getItemsByUploadedDate(nextPageId);
       const lastTimeStamp = mediaPage.items.at(-1).creationTimestamp;
       nextPageId = mediaPage?.nextPageId;
       if (!mediaPage) break;
       if (!mediaPage.items || mediaPage?.items?.length === 0) continue;
       if (filter.intervalType === 'include') {
         mediaPage.items = mediaPage.items.filter(
-          (item) => item.creationTimestamp >= lowerBoundaryDate && item.creationTimestamp <= higherBoundaryDate
+          (item: MediaItem) => item.creationTimestamp >= lowerBoundaryDate && item.creationTimestamp <= higherBoundaryDate
         );
         skipTheRest = lastTimeStamp < lowerBoundaryDate;
       } else if (filter.intervalType === 'exclude') {
-        mediaPage.items = mediaPage.items.filter((item) => item.creationTimestamp < lowerBoundaryDate || item.creationTimestamp > higherBoundaryDate);
+        mediaPage.items = mediaPage.items.filter(
+          (item: MediaItem) => item.creationTimestamp < lowerBoundaryDate || item.creationTimestamp > higherBoundaryDate
+        );
       }
       if (!mediaPage.items || mediaPage?.items?.length === 0) continue;
       log(`Found ${mediaPage?.items?.length} items`);
@@ -322,25 +351,32 @@ export default class Core {
     return mediaItems;
   }
 
-  preChecks(filter) {
+  preChecks(filter: Filter): void {
     if (filter.fileNameRegex) {
       const isValid = isPatternValid(filter.fileNameRegex);
-      if (isValid !== true) throw new Error(isValid);
+      if (isValid !== true) throw isValid;
     }
     if (filter.descriptionRegex) {
       const isValid = isPatternValid(filter.descriptionRegex);
-      if (isValid !== true) throw new Error(isValid);
+      if (isValid !== true) throw isValid;
     }
     if (parseInt(filter.lowerBoundarySize) >= parseInt(filter.higherBoundarySize)) {
       throw new Error('Invalid Size Filter');
     }
   }
 
-  async actionWithFilter(action, filter, source, targetAlbum, newTargetAlbumName, apiSettings) {
+  async actionWithFilter(
+    action: Action,
+    filter: Filter,
+    source: Source,
+    targetAlbum: any,
+    newTargetAlbumName: string,
+    apiSettings?: ApiSettings
+  ): Promise<void> {
     try {
       this.preChecks(filter);
-    } catch (error) {
-      log(error, 'error');
+    } catch (error: any) {
+      log(String(error), 'error');
       return;
     }
 
@@ -351,7 +387,7 @@ export default class Core {
 
     try {
       const startTime = new Date();
-      const mediaItems = await this.getAndFilterMedia(filter, source, apiSettings);
+      const mediaItems = await this.getAndFilterMedia(filter, source);
 
       // Early exit if no items to process
       if (!mediaItems?.length) {
@@ -371,15 +407,15 @@ export default class Core {
         preserveOrder: Boolean(filter.similarityThreshold || filter.sortBySize),
       });
 
-      log(`Task completed in ${timeToHHMMSS(new Date() - startTime)}`, 'success');
-    } catch (error) {
-      log(error.stack, 'error');
+      log(`Task completed in ${timeToHHMMSS(new Date().getTime() - startTime.getTime())}`, 'success');
+    } catch (error: any) {
+      log(error?.stack ?? String(error), 'error');
     } finally {
       this.isProcessRunning = false;
     }
   }
 
-  async executeAction(action, params) {
+  async executeAction(action: Action, params: ExecuteActionParams): Promise<void> {
     const { mediaItems, source, targetAlbum, newTargetAlbumName, preserveOrder } = params;
     log(`Items to process: ${mediaItems?.length}`);
     if (action.elementId === 'restoreTrash' || source === 'trash') await this.apiUtils.restoreFromTrash(mediaItems);
