@@ -1,4 +1,4 @@
-import parser from './parser.js';
+import parser from './parser';
 import { assertType, assertInstance } from '../utils/helpers';
 import { windowGlobalData } from '../windowGlobalData';
 

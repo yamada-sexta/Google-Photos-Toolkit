@@ -1,6 +1,6 @@
-import { generateFilterDescription } from './filter-description-gen.js';
-import getFormData from './utils/getFormData.js';
-import { disableActionBar } from './utils/disable-action-bar.js';
+import { generateFilterDescription } from './filter-description-gen';
+import getFormData from './utils/getFormData';
+import { disableActionBar } from './utils/disable-action-bar';
 import { core } from '../../globals';
 
 export function updateUI() {

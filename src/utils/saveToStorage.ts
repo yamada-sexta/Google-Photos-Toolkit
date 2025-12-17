@@ -1,4 +1,4 @@
-import { windowGlobalData } from '../windowGlobalData.js';
+import { windowGlobalData } from '../windowGlobalData';
 
 export default function saveToStorage(key: string, value: any): void {
   if (typeof Storage !== 'undefined') {

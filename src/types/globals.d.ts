@@ -5,10 +5,11 @@ declare global {
     gptkApi: import('../api/api').default;
     gptkCore: import('../gptk-core').default;
     gptkApiUtils: import('../api/api-utils').default;
+    // Google Photos global data bag used by GPTK
+    WIZ_global_data: any;
   }
-
-  // Provided by Tampermonkey/Greasemonkey in user-script context
-  const unsafeWindow: Window & typeof globalThis;
 }
+
+/// <reference types="greasemonkey" />
 
 export {};

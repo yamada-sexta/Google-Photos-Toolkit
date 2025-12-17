@@ -1,5 +1,5 @@
-import log from '../logic/log.ts';
-import { core } from '../../globals.js';
+import log from '../logic/log';
+import { core } from '../../globals';
 
 export default function controlButttonsListeners() {
   const clearLogButton = document.getElementById('clearLog');

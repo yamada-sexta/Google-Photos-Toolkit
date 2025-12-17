@@ -32,6 +32,7 @@
   "homepage": "https://github.com/xob0t/Google-Photos-Toolkit#readme",
   "devDependencies": {
     "@types/bun": "^1.3.4",
+    "@types/greasemonkey": "^4.0.7",
     "esbuild": "^0.24.0",
     "eslint": "^8.56.0",
     "typescript": "^5.9.3"

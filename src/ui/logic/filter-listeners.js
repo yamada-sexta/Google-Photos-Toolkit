@@ -1,4 +1,4 @@
-import { updateUI } from './update-state.js';
+import { updateUI } from './update-state';
 export default async function filterListenersSetUp() {
   function resetDateInput() {
     let parent = this.parentNode;
