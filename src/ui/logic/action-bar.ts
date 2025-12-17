@@ -5,7 +5,8 @@ import { generateFilterDescription } from './filter-description-gen';
 import { updateUI } from './update-state';
 import { disableActionBar } from './utils/disable-action-bar';
 import getFromStorage from '../../utils/getFromStorage';
-import type { Filter, Source } from '../../gptk-core';
+import type { ApiSettings, Filter, Source } from '../../gptk-core';
+import type { Album } from '../../api/parser';
 
 const actions = [
   {
@@ -27,13 +28,11 @@ const actions = [
   { elementId: 'copyDescFromOther' },
 ] as const;
 
-
-
-function userConfirmation(action: typeof actions[number], filter: Filter, source: Source) {
-  function generateWarning(action, filter) {
+function userConfirmation(action: (typeof actions)[number], filter: Filter, source: Source) {
+  function generateWarning(action: (typeof actions)[number], filter: Filter, source: Source) {
     const filterDescription = generateFilterDescription(filter);
-    const sourceHuman = document.querySelector('input[name="source"]:checked+label').textContent.trim();
-    const actionElement = document.getElementById(action.elementId);
+    const sourceHuman = (<HTMLLabelElement>document.querySelector('input[name="source"]:checked+label')!).textContent!.trim();
+    const actionElement = <HTMLElement>document.getElementById(action.elementId)!;
     const warning = [];
     warning.push(`Account: ${windowGlobalData.account}`);
     warning.push(`\nSource: ${sourceHuman}`);
@@ -47,41 +46,42 @@ function userConfirmation(action: typeof actions[number], filter: Filter, source
   return true;
 }
 
-async function runAction(actionId) {
+async function runAction(actionId: string) {
   const action = actions.find((action) => action.elementId === actionId);
+  if (!action) return;
   // get the target album if action has one
-  let targetAlbum = null;
-  let newTargetAlbumName = null;
+  let targetAlbum: Album | null = null;
+  let newTargetAlbumName: string | null = null;
   if (actionId === 'toExistingAlbum') {
-    const albumMediaKey = document.getElementById(action?.targetId)?.value;
-    targetAlbum = getFromStorage('albums').find((album) => album.mediaKey === albumMediaKey);
+    const albumMediaKey = (<HTMLInputElement>document.getElementById((<any>action).targetId)!).value;
+    targetAlbum = getFromStorage('albums').find((album: any) => album.mediaKey === albumMediaKey);
   } else {
-    newTargetAlbumName = document.getElementById(action?.targetId)?.value;
+    newTargetAlbumName = (<HTMLInputElement>document.getElementById((<any>action).targetId)!).value;
   }
   // id of currently selected source element
-  const source = document.querySelector('input[name="source"]:checked').id;
+  const source = <Source>(<HTMLInputElement>document.querySelector('input[name="source"]:checked')!).id;
 
   // check filter validity
-  const filtersForm = document.querySelector('.filters-form');
+  const filtersForm = <HTMLFormElement>document.querySelector('.filters-form')!;
   if (!filtersForm.checkValidity()) {
     filtersForm.reportValidity();
     return;
   }
 
   // Parsed filter object
-  const filter = getFormData('.filters-form');
+  const filter = <Filter><unknown>getFormData('.filters-form');
   // Parsed settings object
-  const apiSettings = getFormData('.settings-form');
+  const apiSettings: ApiSettings = getFormData('.settings-form') as any;
   if (!userConfirmation(action, filter, source)) return;
 
   // Disable action bar while process is running
   disableActionBar(true);
   // add class to indicate which action is running
-  document.getElementById(actionId).classList.add('running');
+  (<HTMLElement>document.getElementById(actionId)!).classList.add('running');
   // Run it
-  await core.actionWithFilter(action, filter, source, targetAlbum, newTargetAlbumName, apiSettings);
+  await core.actionWithFilter(action, filter, source, targetAlbum, newTargetAlbumName ?? '', apiSettings);
   // remove 'running' class
-  document.getElementById(actionId).classList.remove('running');
+  (<HTMLElement>document.getElementById(actionId)!).classList.remove('running');
   // Update the ui
   updateUI();
   // force show main action bar
@@ -89,25 +89,25 @@ async function runAction(actionId) {
 }
 
 function showExistingAlbumContainer() {
-  document.querySelector('.action-buttons').style.display = 'none';
-  document.querySelector('.to-existing-container').style.display = 'flex';
+  (<HTMLElement>document.querySelector('.action-buttons')!).style.display = 'none';
+  (<HTMLElement>document.querySelector('.to-existing-container')!).style.display = 'flex';
 }
 
 function showNewAlbumContainer() {
-  document.querySelector('.action-buttons').style.display = 'none';
-  document.querySelector('.to-new-container').style.display = 'flex';
+  (<HTMLElement>document.querySelector('.action-buttons')!).style.display = 'none';
+  (<HTMLElement>document.querySelector('.to-new-container')!).style.display = 'flex';
 }
 
 function showActionButtons() {
-  document.querySelector('.action-buttons').style.display = 'flex';
-  document.querySelector('.to-existing-container').style.display = 'none';
-  document.querySelector('.to-new-container').style.display = 'none';
+  (<HTMLElement>document.querySelector('.action-buttons')!).style.display = 'flex';
+  (<HTMLElement>document.querySelector('.to-existing-container')!).style.display = 'none';
+  (<HTMLElement>document.querySelector('.to-new-container')!).style.display = 'none';
 }
 
 export function actionsListenersSetUp() {
   for (const action of actions) {
-    const actionElement = document.getElementById(action.elementId);
-    if (actionElement.type === 'button') {
+    const actionElement = <HTMLElement>document.getElementById(action.elementId)!;
+    if ("type" in actionElement && actionElement.type === 'button') {
       actionElement.addEventListener('click', async function (event) {
         event.preventDefault();
         await runAction(actionElement.id);
@@ -120,10 +120,10 @@ export function actionsListenersSetUp() {
     }
   }
 
-  const showExistingAlbumForm = document.querySelector('#showExistingAlbumForm');
+  const showExistingAlbumForm = <HTMLElement>document.querySelector('#showExistingAlbumForm')!;
   showExistingAlbumForm.addEventListener('click', showExistingAlbumContainer);
 
-  const showNewAlbumForm = document.querySelector('#showNewAlbumForm');
+  const showNewAlbumForm = <HTMLElement>document.querySelector('#showNewAlbumForm')!;
   showNewAlbumForm.addEventListener('click', showNewAlbumContainer);
 
   const returnButtons = document.querySelectorAll('.return');

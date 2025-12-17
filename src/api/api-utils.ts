@@ -4,61 +4,7 @@ import splitArrayIntoChunks from '../utils/splitArrayIntoChunks';
 import { apiSettingsDefault } from './api-utils-default-presets';
 import type Core from '../gptk-core';
 import type { MediaItem } from '../gptk-core';
-
-
-// declare module '*/vendor/google-photos-toolkit/api/api-utils.js' {
-//     import Api from './api';
-//     import { Album, LinkItem, TrashItem, LibraryItem, BulkMediaInfo } from './parser';
-
-//     interface ApiSettings {
-//         maxConcurrentApiReq?: number;
-//         operationSize?: number;
-//         lockedFolderOpSize?: number;
-//         infoSize?: number;
-//     }
-
-//     export default class ApiUtils {
-//         constructor(core?: any, settings?: ApiSettings, windowGlobalData?: any);
-//         api: Api;
-
-//         executeWithConcurrency(apiMethod: Function, operationSize: number, itemsArray: any[], ...args: any[]): Promise<any[]>;
-//         getAllItems(apiMethod: Function, ...args: any[]): Promise<any[]>;
-        
-//         getAllAlbums(): Promise<Album[]>;
-//         getAllSharedLinks(): Promise<LinkItem[]>;
-//         getAllMediaInSharedLink(sharedLinkId: string): Promise<any[]>;
-//         getAllMediaInAlbum(albumMediaKey: string): Promise<any[]>;
-//         getAllTrashItems(): Promise<TrashItem[]>;
-//         getAllFavoriteItems(): Promise<LibraryItem[]>;
-//         getAllSearchItems(searchQuery: string): Promise<LibraryItem[]>;
-//         getAllLockedFolderItems(): Promise<any[]>;
-
-//         moveToLockedFolder(mediaItems: any[]): Promise<void>;
-//         removeFromLockedFolder(mediaItems: any[]): Promise<void>;
-//         moveToTrash(mediaItems: any[]): Promise<void>;
-//         restoreFromTrash(trashItems: any[]): Promise<void>;
-//         sendToArchive(mediaItems: any[]): Promise<void>;
-//         unArchive(mediaItems: any[]): Promise<void>;
-//         setAsFavorite(mediaItems: any[]): Promise<void>;
-//         unFavorite(mediaItems: any[]): Promise<void>;
-        
-//         addToExistingAlbum(mediaItems: any[], targetAlbum: Album, preserveOrder?: boolean): Promise<void>;
-//         addToNewAlbum(mediaItems: any[], targetAlbumName: string, preserveOrder?: boolean): Promise<void>;
-        
-//         getBatchMediaInfoChunked(mediaItems: any[]): Promise<BulkMediaInfo[]>;
-//     }
-// } 
-
-// const album = {
-//       title: targetAlbumName,
-//       shared: false,
-//       mediaKey: await this.api.createAlbum(targetAlbumName),
-//     }
-export interface Album {
-  mediaKey: string;
-  title: string;
-  isShared?: boolean;
-}
+import type { Album } from './parser';
 
 export default class ApiUtils {
   api: Api;
@@ -279,7 +225,7 @@ export default class ApiUtils {
     // album.mediaKey = await this.api.createAlbum(targetAlbumName);
     const album = {
       title: targetAlbumName,
-      shared: false,
+      isShared: false,
       mediaKey: await this.api.createAlbum(targetAlbumName),
     }
     await this.addToExistingAlbum(mediaItems, album, preserveOrder);
