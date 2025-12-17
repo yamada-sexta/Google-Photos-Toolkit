@@ -19,8 +19,9 @@
   },
   "main": "google_photos_toolkit.user.js",
   "scripts": {
-    "build": "node build/esbuild.mjs",
-    "watch": "node build/esbuild.mjs --watch"
+    "build": "bun run build.ts",
+    "watch": "bun run build.ts --watch",
+    "dev": "bun run build.ts --dev"
   },
   "keywords": [],
   "author": "xob0t",

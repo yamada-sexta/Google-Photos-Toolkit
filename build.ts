@@ -49,10 +49,17 @@ async function buildOnce() {
     console.log('Build completed.');
 }
 
-// Check if there is --watch argument
-const isWatchMode = process.argv.includes('--watch');
+// Check if there is --dev argument
+const isDevMode = process.argv.includes('--dev');
 
-if (isWatchMode) {
+const OUT_FILE_NAME = 'google_photos_toolkit.user.js';
+const OUT_FILE_PATH = path.resolve(`./${OUT_FILE_NAME}`);
+
+if (isDevMode) {
+    // Initial build so the file exists before serving
+    await buildOnce();
+
+    // Watch for changes and rebuild
     const srcWatcher = watch(
         path.resolve('./src'),
         { recursive: true },
@@ -61,12 +68,37 @@ if (isWatchMode) {
             await buildOnce();
         }
     );
-    process.on("SIGINT", () => {
+
+    const port = Number(process.env.PORT || 3001);
+
+    const server = Bun.serve({
+        port,
+        fetch: async (req) => {
+            const url = new URL(req.url);
+            if (url.pathname === '/' || url.pathname === `/${OUT_FILE_NAME}`) {
+                if (!fs.existsSync(OUT_FILE_PATH)) {
+                    return new Response('Build artifact not found. Try again after rebuild.', { status: 503 });
+                }
+                const file = Bun.file(OUT_FILE_PATH);
+                return new Response(file, {
+                    headers: {
+                        'content-type': 'application/javascript; charset=utf-8',
+                        'cache-control': 'no-store',
+                    },
+                });
+            }
+            return new Response('Not Found', { status: 404 });
+        },
+    });
+
+    console.log(`Dev server running at http://localhost:${port}/${OUT_FILE_NAME}`);
+    console.log('Watching for changes in src/ ...');
+
+    process.on('SIGINT', () => {
+        try { server.stop(); } catch {}
         srcWatcher.close();
         process.exit(0);
     });
-
-    console.log('Watching for changes in src/ ...');
 } else {
     // Single build
     await buildOnce();
