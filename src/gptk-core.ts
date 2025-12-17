@@ -10,7 +10,7 @@ type Source = 'library' | 'search' | 'trash' | 'lockedFolder' | 'favorites' | 's
 type MediaItem = any;
 type Filter = any;
 type Action = any;
-type ApiSettings = any;
+type ApiSettings = typeof apiSettingsDefault;
 
 interface ExecuteActionParams {
   mediaItems: MediaItem[];
