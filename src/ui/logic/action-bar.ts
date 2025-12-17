@@ -5,6 +5,7 @@ import { generateFilterDescription } from './filter-description-gen';
 import { updateUI } from './update-state';
 import { disableActionBar } from './utils/disable-action-bar';
 import getFromStorage from '../../utils/getFromStorage';
+import type { Filter, Source } from '../../gptk-core';
 
 const actions = [
   {
@@ -24,9 +25,11 @@ const actions = [
   { elementId: 'lock' },
   { elementId: 'unLock' },
   { elementId: 'copyDescFromOther' },
-];
+] as const;
 
-function userConfirmation(action, filter, source) {
+
+
+function userConfirmation(action: typeof actions[number], filter: Filter, source: Source) {
   function generateWarning(action, filter) {
     const filterDescription = generateFilterDescription(filter);
     const sourceHuman = document.querySelector('input[name="source"]:checked+label').textContent.trim();
