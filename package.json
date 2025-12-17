@@ -9,7 +9,7 @@
       "*://photos.google.com/*"
     ],
     "icon": "https://raw.githubusercontent.com/xob0t/Google-Photos-Toolkit/main/media/icon.png",
-    "downloadURL": "https://github.com/yamada-sexta/Google-Photos-Toolkit/releases/latest/download/google_photos_toolkit.user.js",
+    "downloadURL": "https://yamada-sexta.github.io/google-photos-toolkit/google_photos_toolkit.user.js",
     "run-at": "body",
     "grant": [
       "GM_registerMenuCommand",
