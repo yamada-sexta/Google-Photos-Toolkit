@@ -23,11 +23,10 @@ const cssAsTextPlugin: BunPlugin = {
     },
 };
 
-// Build with Bun, mirroring esbuild.mjs behavior
-const bannerText = userScriptMetadataBlock();
 
 
-async function buildOnce() {
+
+async function buildOnce({ banner }: { banner: string }) {
     await Bun.build({
         entrypoints: ['src/index.ts'],
         outdir: '.',
@@ -36,7 +35,7 @@ async function buildOnce() {
         target: 'browser',
         splitting: false,
         sourcemap: 'none',
-        banner: bannerText,
+        banner,
         define: {
             __VERSION__: JSON.stringify(pkg.version),
             __HOMEPAGE__: JSON.stringify(pkg.homepage),
@@ -56,8 +55,15 @@ const OUT_FILE_NAME = 'google_photos_toolkit.user.js';
 const OUT_FILE_PATH = path.resolve(`./${OUT_FILE_NAME}`);
 
 if (isDevMode) {
+    const port = Number(process.env.PORT || 3001);
+    const url = `http://localhost:${port}/${OUT_FILE_NAME}`;
+    // Build with Bun, mirroring esbuild.mjs behavior
+    const bannerText = userScriptMetadataBlock({
+        urlOverrides: url
+    });
+
     // Initial build so the file exists before serving
-    await buildOnce();
+    await buildOnce({ banner: bannerText });
 
     // Watch for changes and rebuild
     const srcWatcher = watch(
@@ -65,11 +71,10 @@ if (isDevMode) {
         { recursive: true },
         async (event, filename) => {
             console.log(`Detected ${event} in ${filename} (src)`);
-            await buildOnce();
+            await buildOnce({ banner: bannerText });
         }
     );
 
-    const port = Number(process.env.PORT || 3001);
 
     const server = Bun.serve({
         port,
@@ -91,17 +96,18 @@ if (isDevMode) {
         },
     });
 
-    console.log(`Dev server running at http://localhost:${port}/${OUT_FILE_NAME}`);
+    console.log(`Dev server running at ${url}`);
     console.log('Watching for changes in src/ ...');
 
     process.on('SIGINT', () => {
-        try { server.stop(); } catch {}
+        try { server.stop(); } catch { }
         srcWatcher.close();
         process.exit(0);
     });
 } else {
     // Single build
-    await buildOnce();
+    const bannerText = userScriptMetadataBlock({});
+    await buildOnce({ banner: bannerText });
 }
 
 

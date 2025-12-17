@@ -19,7 +19,9 @@ function generateComment(manifest: Manifest): string {
   return ['// ==UserScript==', lines, '// ==/UserScript==', ''].join('\n');
 }
 
-export default function userScriptMetadataBlock(): string {
+export default function userScriptMetadataBlock(args: {
+  urlOverrides?: string
+}): string {
   const metadata = {
     name: data.nameFull,
     description: data.description,
