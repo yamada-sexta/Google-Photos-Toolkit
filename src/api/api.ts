@@ -440,7 +440,7 @@ export default class Api {
     }
   }
 
-  async setAlbumItemOrder(albumMediaKey, albumItemKeys, insertAfter = null) {
+  async setAlbumItemOrder(albumMediaKey: string, albumItemKeys: string[], insertAfter: string | null = null) {
     // type assertion
     if (albumMediaKey) assertType(albumMediaKey, 'string');
     if (albumItemKeys) assertInstance(albumItemKeys, Array);
@@ -466,16 +466,16 @@ export default class Api {
     }
   }
 
-  async setFavorite(dedupKeyArray, action = true) {
+  async setFavorite(dedupKeyArray: string[], action: boolean | number = true) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
     if (action) assertType(action, 'boolean');
 
     if (action === true) action = 1; //set favorite
     else if (action === false) action = 2; //un favorite
-    dedupKeyArray = dedupKeyArray.map((item) => [null, item]);
+    const dedupKeyArray2 = dedupKeyArray.map((item) => [null, item]);
     const rpcid = 'Ftfh0';
-    const requestData = [dedupKeyArray, [action]];
+    const requestData = [dedupKeyArray2, [action]];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response;
@@ -485,7 +485,7 @@ export default class Api {
     }
   }
 
-  async setArchive(dedupKeyArray, action = true) {
+  async setArchive(dedupKeyArray: string[], action: boolean | number = true) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
     if (action) assertType(action, 'boolean');
@@ -493,9 +493,9 @@ export default class Api {
     if (action === true) action = 1; // send to archive
     else if (action === false) action = 2; // un archive
 
-    dedupKeyArray = dedupKeyArray.map((item) => [null, [action], [null, item]]);
+    const dedupKeyArray2: [null, [number], [null, string]][] = dedupKeyArray.map((item) => [null, [action], [null, item]]);
     const rpcid = 'w7TP3c';
-    const requestData = [dedupKeyArray, null, 1];
+    const requestData = [dedupKeyArray2, null, 1];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response;
@@ -505,7 +505,7 @@ export default class Api {
     }
   }
 
-  async moveToLockedFolder(dedupKeyArray) {
+  async moveToLockedFolder(dedupKeyArray: string[]) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
 
@@ -520,7 +520,7 @@ export default class Api {
     }
   }
 
-  async removeFromLockedFolder(dedupKeyArray) {
+  async removeFromLockedFolder(dedupKeyArray: string[]) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
 
@@ -540,7 +540,7 @@ export default class Api {
     if (parseResponse) assertType(parseResponse, 'boolean');
 
     const rpcid = 'EzwWhf';
-    const requestData = [];
+    const requestData: [] = [];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       if (parseResponse) return parser(response, rpcid);
@@ -558,7 +558,7 @@ export default class Api {
   // getDownloadUrl receives a dl url, and can use authKey to download shared media - dl url does not have a Content-Length header
   // getDownloadToken receives a token, which is then used to check if the dl url is ready with checkDownloadToken - dl url has a Content-Length header
 
-  async getDownloadUrl(mediaKeyArray, authKey = null) {
+  async getDownloadUrl(mediaKeyArray: string[], authKey: string | null = null) {
     // type assertion
     if (mediaKeyArray) assertInstance(mediaKeyArray, Array);
 
@@ -573,15 +573,15 @@ export default class Api {
     }
   }
 
-  async getDownloadToken(mediaKeyArray) {
+  async getDownloadToken(mediaKeyArray: string[]) {
     // use the token with checkDownloadToken to check if DL ulr is ready
 
     // type assertion
     if (mediaKeyArray) assertInstance(mediaKeyArray, Array);
 
     const rpcid = 'yCLA7';
-    mediaKeyArray = mediaKeyArray.map((id) => [id]);
-    const requestData = [mediaKeyArray];
+    const mediaKeyArray2 = mediaKeyArray.map((id) => [id]);
+    const requestData = [mediaKeyArray2];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response[0];
@@ -591,7 +591,7 @@ export default class Api {
     }
   }
 
-  async checkDownloadToken(dlToken, parseResponse = true) {
+  async checkDownloadToken(dlToken: string, parseResponse: boolean = true) {
     // returns dl url if one found
 
     // type assertion
@@ -610,7 +610,7 @@ export default class Api {
     }
   }
 
-  async removeItemsFromSharedAlbum(albumMediaKey, mediaKeyArray) {
+  async removeItemsFromSharedAlbum(albumMediaKey: string, mediaKeyArray: string[]) {
     // type assertion
     if (albumMediaKey) assertType(albumMediaKey, 'string');
     if (mediaKeyArray) assertInstance(mediaKeyArray, Array);
@@ -630,7 +630,7 @@ export default class Api {
     }
   }
 
-  async saveSharedMediaToLibrary(albumMediaKey, mediaKeyArray) {
+  async saveSharedMediaToLibrary(albumMediaKey: string, mediaKeyArray: string[]) {
     // save shared media to own library
     // type assertion
     if (albumMediaKey) assertType(albumMediaKey, 'string');
@@ -647,14 +647,14 @@ export default class Api {
     }
   }
 
-  async savePartnerSharedMediaToLibrary(mediaKeyArray) {
+  async savePartnerSharedMediaToLibrary(mediaKeyArray: string[]) {
     // save partner shared media to own library
     // type assertion
     if (mediaKeyArray) assertInstance(mediaKeyArray, Array);
 
     const rpcid = 'Es7fke';
-    mediaKeyArray = mediaKeyArray.map((id) => [id]);
-    const requestData = [mediaKeyArray];
+    const mediaKeyArray2: [string][] = mediaKeyArray.map((id) => [id]);
+    const requestData = [mediaKeyArray2];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response;
@@ -664,7 +664,7 @@ export default class Api {
     }
   }
 
-  async getPartnerSharedMedia(partnerActorId, gaiaId, pageId, parseResponse = true) {
+  async getPartnerSharedMedia(partnerActorId: string, gaiaId: string, pageId: string, parseResponse: boolean = true) {
     // partner's actorId, your account's gaiaId
     // type assertion
     if (partnerActorId) assertType(partnerActorId, 'string');
@@ -684,20 +684,20 @@ export default class Api {
     }
   }
 
-  async setItemGeoData(dedupKeyArray, center, visible1, visible2, scale, gMapsPlaceId) {
+  async setItemGeoData(dedupKeyArray: string[], center: number[], visible1: number[], visible2: number[], scale: number, gMapsPlaceId: string) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
     if (center) assertInstance(center, Array);
     if (visible1) assertInstance(visible1, Array);
     if (visible2) assertInstance(visible2, Array);
-    if (scale) assertInstance(scale, 'number');
-    if (gMapsPlaceId) assertInstance(gMapsPlaceId, 'string');
+    if (scale) assertType(scale, 'number');
+    if (gMapsPlaceId) assertType(gMapsPlaceId, 'string');
 
     // every point is an array of coordinates, every coordinate is 9 digit-long int
     // coordinates and scale can be extracted from mapThumb, but gMapsPlaceId is not exposed in GP
     const rpcid = 'EtUHOe';
-    dedupKeyArray = dedupKeyArray.map((dedupKey) => [null, dedupKey]);
-    const requestData = [dedupKeyArray, [2, center, [visible1, visible2], [null, null, scale], gMapsPlaceId]];
+    const dedupKeyArray2: [null, string][] = dedupKeyArray.map((dedupKey) => [null, dedupKey]);
+    const requestData = [dedupKeyArray2, [2, center, [visible1, visible2], [null, null, scale], gMapsPlaceId]];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response;
@@ -707,13 +707,13 @@ export default class Api {
     }
   }
 
-  async deleteItemGeoData(dedupKeyArray) {
+  async deleteItemGeoData(dedupKeyArray: string[]) {
     // type assertion
     if (dedupKeyArray) assertInstance(dedupKeyArray, Array);
 
     const rpcid = 'EtUHOe';
-    dedupKeyArray = dedupKeyArray.map((dedupKey) => [null, dedupKey]);
-    const requestData = [dedupKeyArray, [1]];
+    const dedupKeyArray2: [null, string][] = dedupKeyArray.map((dedupKey) => [null, dedupKey]);
+    const requestData = [dedupKeyArray2, [1]];
     try {
       const response = await this.makeApiRequest(rpcid, requestData);
       return response;
@@ -723,7 +723,7 @@ export default class Api {
     }
   }
 
-  async setItemTimestamp(dedupKey, timestamp, timezone) {
+  async setItemTimestamp(dedupKey: string, timestamp: number, timezone: number) {
     // timestamp in epoch miliseconds
     // timesone as an offset e.g 19800 is GMT+05:30
 
@@ -742,7 +742,7 @@ export default class Api {
     }
   }
 
-  async setItemDescription(dedupKey, description) {
+  async setItemDescription(dedupKey: string, description: string) {
     // type assertion
     if (dedupKey) assertType(dedupKey, 'string');
     if (description) assertType(description, 'string');
@@ -758,7 +758,7 @@ export default class Api {
     }
   }
 
-  async getItemInfo(mediaKey, albumMediaKey = null, authKey = null, parseResponse = true) {
+  async getItemInfo(mediaKey: string, albumMediaKey: string | null = null, authKey: string | null = null, parseResponse: boolean = true) {
     // type assertion
     if (mediaKey) assertType(mediaKey, 'string');
     if (albumMediaKey) assertType(albumMediaKey, 'string');
@@ -778,7 +778,7 @@ export default class Api {
     }
   }
 
-  async getItemInfoExt(mediaKey, authKey = null, parseResponse = true) {
+  async getItemInfoExt(mediaKey: string, authKey: boolean | null = null, parseResponse: boolean = true) {
     // type assertion
     if (mediaKey) assertType(mediaKey, 'string');
     if (authKey) assertType(authKey, 'boolean');
@@ -796,15 +796,15 @@ export default class Api {
     }
   }
 
-  async getBatchMediaInfo(mediaKeyArray, parseResponse = true) {
+  async getBatchMediaInfo(mediaKeyArray: string[], parseResponse: boolean = true) {
     // type assertion
     if (mediaKeyArray) assertInstance(mediaKeyArray, Array);
     if (parseResponse) assertType(parseResponse, 'boolean');
 
     const rpcid = 'EWgK9e';
-    mediaKeyArray = mediaKeyArray.map((id) => [id]);
+    const mediaKeyArray2: [string][] = mediaKeyArray.map((id) => [id]);
     // prettier-ignore
-    const requestData = [[[mediaKeyArray], [[null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [], null, null, null, null, null, null, null, null, null, null, []]]]];
+    const requestData = [[[mediaKeyArray2], [[null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, [], null, null, null, null, null, null, null, null, null, null, []]]]];
     try {
       let response = await this.makeApiRequest(rpcid, requestData);
       response = response[0][1];

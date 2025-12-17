@@ -24,7 +24,7 @@ export function isPatternValid(pattern: string): true | Error {
   }
 }
 
-export function assertType(variable: unknown, expectedType: string): void {
+export function assertType(variable: unknown, expectedType: "string" | "number" | "bigint" | "boolean" | "symbol" | "undefined" | "object" | "function"): void {
   const actualType = typeof variable;
   if (actualType !== expectedType) {
     throw new TypeError(`Expected type ${expectedType} but got ${actualType}`);
