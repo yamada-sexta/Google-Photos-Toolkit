@@ -3,4 +3,4 @@ export const apiSettingsDefault = {
   operationSize: 500,
   lockedFolderOpSize : 100,
   infoSize: 5000
-};
+} as const;
