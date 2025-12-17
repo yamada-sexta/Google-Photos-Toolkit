@@ -69,7 +69,7 @@
     max-width: 1250px;
     min-width: 300px;
     z-index: 500;
-    font-family: Helvetica, sans-serif;
+    font-family: "Google Sans", Roboto, Arial, sans-serif;
     padding: 0;
     display: none;
     flex-direction: column;
